@@ -31,12 +31,71 @@ class Application extends CI_Controller {
      * Render this page
      */
     function render() {
-        $this->data['menubar'] = $this->parser->parse('_menubar', $this->config->item('menu_choices'),true);
+//        $this->data['menubar'] = $this->parser->parse('_menubar', $this->config->item('menu_choices'),true);
+        $this->data['menubar'] = $this->parser->parse('_menubar', $this->makeMenu(), true);
         $this->data['content'] = $this->parser->parse($this->data['pagebody'], $this->data, true);
 
         // finally, build the browser page!
         $this->data['data'] = &$this->data;
         $this->parser->parse('_template', $this->data);
+    }
+    
+    function restrict($roleNeeded = null)
+    {
+        $userRole = $this->session->userdata('userRole');
+        if ($roleNeeded != null)
+        {
+            if (is_array($roleNeeded))
+            {
+                if (!in_array($userRole, $roleNeeded))
+                {
+                    header('Location: ../');
+                    return;
+                }
+            }
+            else if ($userRole != $roleNeeded)
+            {
+                header('Location: ../');
+                return;
+            }
+        }
+    }
+    
+    function makeMenu()
+    {
+        $name = $this->session->userdata('userName');
+        $role = $this->session->userdata('userRole');
+        $menu = [];
+        
+        if (empty($name))
+            $name = "stranger";
+        
+        if ($role == "admin")
+        {
+            $menu = array(
+                        array('name' => "Alpha", 'link' => '/alpha'),
+                        array('name' => "Beta", 'link' => '/beta'),
+                        array('name' => "Gamma", 'link' => '/gamma'),
+                        array('name' => "Logout", 'link' => '/auth/logout'),
+                    );
+        }
+        else if ($role == "user")
+        {
+            $menu = array(
+                        array('name' => "Alpha", 'link' => '/alpha'),
+                        array('name' => "Beta", 'link' => '/beta'),
+                        array('name' => "Logout", 'link' => '/auth/logout'),
+                    );
+        }
+        else
+        {
+            $menu = array(
+                        array('name' => "Alpha", 'link' => '/alpha'),
+                        array('name' => "Login", 'link' => '/auth'),
+                    );
+        }
+        
+        return array('menudata' => $menu, 'name' => $name);
     }
 
 }
